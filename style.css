@@ -344,3 +344,50 @@ body {
     height: 100px;
   }
 }
+
+/* NOVOS ESTILOS PARA MENU MOBILE */
+
+/* Estilos para o menu mobile */
+.menu-toggle {
+  display: none; /* Escondido por padrão em desktop */
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 10px;
+  }
+  
+  .main-nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: transparent;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+  
+  .main-nav.active {
+    display: flex;
+  }
+  
+  .nav-link {
+    width: 100%;
+    padding: 12px 0;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .brand {
+    flex-grow: 1;
+    text-align: center;
+  }
+}
