@@ -8,23 +8,23 @@ const MIME_ICONS = [
   {match: "audio", icon: "🎵"},
 ];
 
-function iconForMime(mime){
-  for(const m of MIME_ICONS){
+function iconForMime(mime) {
+  for(const m of MIME_ICONS) {
     if(mime.includes(m.match)) return m.icon;
   }
   return "📄";
 }
 
-function showSection(id){
+function showSection(id) {
   // Verifica se a seção existe (para evitar erros na página Sobre Nós)
   const section = document.getElementById(id);
   if(!section) return;
   
-  document.querySelectorAll(".content-section").forEach(s=>s.classList.add("hidden"));
+  document.querySelectorAll(".content-section").forEach(s => s.classList.add("hidden"));
   section.classList.remove("hidden");
   
   // Atualiza botões ativos
-  document.querySelectorAll(".nav-link").forEach(b=>{
+  document.querySelectorAll(".nav-link").forEach(b => {
     b.classList.remove("active");
     if(b.getAttribute('data-target') === id || 
        (id === 'inicio' && b.getAttribute('href') === 'index.html')) {
@@ -33,21 +33,49 @@ function showSection(id){
   });
 }
 
-// Menu Hamburguer
+// Configuração do Menu Mobile
 function setupMenuToggle() {
   const toggle = document.querySelector('.menu-toggle');
-  if (!toggle) return;
+  const mainNav = document.querySelector('.main-nav');
+  const navLinks = document.querySelectorAll('.nav-link');
   
-  toggle.addEventListener('click', () => {
-    const nav = document.querySelector('.main-nav');
-    nav.classList.toggle('expanded');
-    toggle.setAttribute('aria-expanded', nav.classList.contains('expanded'));
+  if (!toggle) return;
+
+  // Função para fechar o menu
+  function closeMenu() {
+    mainNav.classList.remove('expanded');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  // Toggle do menu
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    mainNav.classList.toggle('expanded');
+    toggle.setAttribute('aria-expanded', mainNav.classList.contains('expanded'));
+  });
+
+  // Fechar menu ao clicar nos links (mobile)
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        closeMenu();
+      }
+    });
+  });
+
+  // Fechar menu ao clicar fora (mobile)
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768 && 
+        !e.target.closest('.main-nav') && 
+        !e.target.closest('.menu-toggle')) {
+      closeMenu();
+    }
   });
 }
 
 // Função para configurar navegação
 function setupNavigation() {
-  document.addEventListener("click", (e)=>{
+  document.addEventListener("click", (e) => {
     // Navegação por botões com data-target
     const btn = e.target.closest(".nav-link[data-target]");
     if(btn) {
@@ -67,14 +95,17 @@ function setupNavigation() {
   });
 }
 
-async function loadFiles(folderId, {listId, loadingId, emptyId, errorId, searchId}){
+async function loadFiles(folderId, {listId, loadingId, emptyId, errorId, searchId}) {
   const listEl = document.getElementById(listId);
   const loadingEl = document.getElementById(loadingId);
   const emptyEl = document.getElementById(emptyId);
   const errorEl = document.getElementById(errorId);
   const searchEl = document.getElementById(searchId);
 
-  if(!folderId){ listEl.innerHTML = "<li>Configurar ID da pasta no config.js</li>"; return; }
+  if(!folderId) { 
+    listEl.innerHTML = "<li>Configurar ID da pasta no config.js</li>"; 
+    return; 
+  }
 
   // Mostra skeletons
   listEl.innerHTML = `
@@ -89,20 +120,20 @@ async function loadFiles(folderId, {listId, loadingId, emptyId, errorId, searchI
   const fields = "files(id,name,mimeType,modifiedTime,webViewLink,webContentLink,iconLink)";
   const url = `https://www.googleapis.com/drive/v3/files?q='${encodeURIComponent(folderId)}'+in+parents+and+trashed=false&orderBy=modifiedTime%20desc&fields=${fields}&key=${encodeURIComponent(window.CONFIG.API_KEY)}`;
 
-  try{
+  try {
     const res = await fetch(url);
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     const files = data.files || [];
 
-    if(files.length === 0){
+    if(files.length === 0) {
       emptyEl.hidden = false;
       return;
     }
 
-    const render = (items)=>{
+    const render = (items) => {
       listEl.innerHTML = "";
-      for(const file of items){
+      for(const file of items) {
         const icon = iconForMime(file.mimeType);
         const when = new Date(file.modifiedTime).toLocaleDateString("pt-BR");
         const link = file.webViewLink || file.webContentLink || `https://drive.google.com/file/d/${file.id}/view`;
@@ -115,32 +146,32 @@ async function loadFiles(folderId, {listId, loadingId, emptyId, errorId, searchI
 
     render(files);
 
-    if(searchEl){
-      searchEl.addEventListener("input", ()=>{
+    if(searchEl) {
+      searchEl.addEventListener("input", () => {
         const q = searchEl.value.trim().toLowerCase();
         const filtered = files.filter(f => f.name.toLowerCase().includes(q));
-        if(filtered.length === 0){
+        if(filtered.length === 0) {
           listEl.innerHTML = "<li>Nenhum resultado para a busca.</li>";
-        }else{
+        } else {
           render(filtered);
         }
       });
     }
-  }catch(err){
+  } catch(err) {
     console.error(err);
     errorEl.hidden = false;
-  }finally{
+  } finally {
     loadingEl.hidden = true;
   }
 }
 
 // Inicialização
-document.addEventListener("DOMContentLoaded", ()=>{
+document.addEventListener("DOMContentLoaded", () => {
   setupMenuToggle();
   setupNavigation();
   
   // Verifica se está na página principal
-  if(document.getElementById('list-portugues')){
+  if(document.getElementById('list-portugues')) {
     const F = window.CONFIG.FOLDER_IDS;
     loadFiles(F.portugues, {listId:"list-portugues", loadingId:"loading-portugues", emptyId:"empty-portugues", errorId:"error-portugues", searchId:"search-portugues"});
     loadFiles(F.ingles, {listId:"list-ingles", loadingId:"loading-ingles", emptyId:"empty-ingles", errorId:"error-ingles", searchId:"search-ingles"});
@@ -155,7 +186,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
   
   // Ativa link ativo na página Sobre Nós
-  if(window.location.pathname.includes('sobre.html')){
+  if(window.location.pathname.includes('sobre.html')) {
     document.querySelector('.nav-link[href="sobre.html"]').classList.add('active');
   }
 });
